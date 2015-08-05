@@ -4,13 +4,60 @@ import sys, os, tempfile, logging
 import urllib.request as urllib2
 import urllib.parse as urlparse
 import zipfile
+import platform
 
 surl = "https://builder.blender.org/download/"
 burl = "https://builder.blender.org"
-# change this depending on what you're looking for
-lookfor = "win64.zip"
-# change this depending on what you want it to download to
-outpath = "C:\\Blender Foundation\\"
+
+# USER CONFIG
+# Change this paths if you want Blender in a different directory
+mac_path = "/Applications/Blender"
+linux_path = "/usr/local/Blender"
+win_path = "C:\\Program Files\\Blender"
+
+# Set the number accordingly to the distro you want to download: 1 for Blender, 2 for Goose, 3 for both
+# This could be a prompt, if you want that replace the variable 'choice' with this 'input('1 for Blender, 2 for Goose, 3 for both and press Enter: ')'
+choice = 1
+
+# This will automatically set your platform
+get_arch = [line for line in (platform.architecture())][0]
+outpath = ''
+lookfor = ''
+arch = ''
+
+# This will automatically set the variables according to your OS
+# MAC
+if platform.system() == 'Darwin' and get_arch == '32bit':
+    outpath = mac_path
+    lookfor = 'OSX'
+    arch = 'i386'   
+if platform.system() == 'Darwin' and get_arch == '64bit':
+    outpath = mac_path
+    lookfor = 'OSX'
+    arch = 'x86_64'
+# LINUX
+elif platform.system() == 'Linux' and get_arch == '32bit':
+    outpath = linux_path
+    lookfor = 'linux'
+    arch = 'i686'
+elif platform.system() == 'Linux' and get_arch == '64bit':
+    outpath = linux_path
+    lookfor = 'linux'
+    arch = 'x86_64'
+# WINDOWS
+elif platform.system() == 'Windows' and get_arch == '32bit':
+    outpath = win_path
+    lookfor = 'win32'
+elif platform.system() == 'Windows' and get_arch == '64bit':
+    outpath = win_path
+    lookfor = 'win64'
+
+# Change this for release type
+only_base = "blender"
+only_goose = "gooseberry"
+both_releases = ""
+
+releases = {1:'blender', 2:'gooseberry', 3:''}
 
 def extract_file(filename):
     print("\nExtracting archive {0}\n\n".format(filename))
@@ -92,10 +139,16 @@ body = data.decode("utf-8")
 downloadables = []
 
 for line in body.split("\n"):
-    if lookfor in line:
-        matchy = matcher.search(line)
-        if matchy:
-            downloadables.append(matchy.group(1))
+    if choice == 1:
+        if lookfor in line and arch in line and not releases[2] in line:
+            matchy = matcher.search(line)
+            if matchy:
+                downloadables.append(matchy.group(1))
+    else:
+        if lookfor in line and arch in line and releases[int(choice)] in line:
+            matchy = matcher.search(line)
+            if matchy:
+                downloadables.append(matchy.group(1))
 
 if len(downloadables) > 0:
     print("Found shinies : {0}\n".format(downloadables))
@@ -113,7 +166,3 @@ for durl in downloadables:
 
 print("All finished! Blend on.\n")
 subprocess.call('explorer "'+outpath+'"', shell=True)
-
-
-
-    
